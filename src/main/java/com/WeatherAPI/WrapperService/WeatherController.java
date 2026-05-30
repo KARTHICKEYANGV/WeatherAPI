@@ -11,10 +11,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class WeatherController {
     private final WeatherService weatherService;
 
-    @GetMapping("/getWeather/{city}")
-    public String getWeather(@PathVariable String city) {
-        System.out.println(city);
+    @GetMapping("/getWeather/{city}/{date}")
+    public WeatherDTO getWeather(@PathVariable String city, @PathVariable String date) {
         // Call the weather API and return the weather data for the given city
-        return "Weather data for " +city+ weatherService.fetchWeatherFromAPI(city);
+        return weatherService.fetchWeatherFromAPI(city,date);
     }
+
+    @GetMapping("/getWeatherString/{city}")
+    public String getWeatherString(@PathVariable String city) {
+        // Call the weather API and return the weather data for the given city
+        return weatherService.fetchWeatherFromAPIString(city);
+    }
+
+
 }

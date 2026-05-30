@@ -8,7 +8,23 @@ import org.springframework.web.client.RestTemplate;
 public class WeatherService {
     @Value("${weather.api.key}")
     private String apiKey;
-    public String fetchWeatherFromAPI(String city) {
+
+    public WeatherDTO fetchWeatherFromAPI(String city, String date) {
+        // Implement the logic to call the weather API and return the weather data for the given city
+
+        String url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/"
+                + city + "/" + date
+                + "?unitGroup=us&key="
+                + apiKey
+                + "&contentType=json";
+        RestTemplate restTemplate = new RestTemplate();
+        WeatherDTO response = restTemplate.getForObject(url, WeatherDTO.class);
+
+        return response;
+
+    }
+
+    public String fetchWeatherFromAPIString(String city) {
         // Implement the logic to call the weather API and return the weather data for the given city
 
         String url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/"
@@ -17,7 +33,6 @@ public class WeatherService {
                 + apiKey
                 + "&contentType=json";
         RestTemplate restTemplate = new RestTemplate();
-
         return restTemplate.getForObject(url, String.class);
     }
 }
