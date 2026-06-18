@@ -1,12 +1,14 @@
 package com.WeatherAPI.WrapperService;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import tools.jackson.core.ObjectReadContext;
+
+import java.time.Duration;
 
 
 @Service
@@ -14,7 +16,7 @@ import tools.jackson.core.ObjectReadContext;
 public class WeatherService {
     private final WeatherRepository weatherRepository;
     private final StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @Value("${weather.api.key}")
     private String apiKey;
 
@@ -24,10 +26,16 @@ public class WeatherService {
         String cacheKey = city + "_" + date;
         String cachedData = redisTemplate.opsForValue().get(cacheKey);
         if (cachedData != null) {
-            WeatherDTO weather_city_date = objectMapper.readValue(cachedData, WeatherDTO.class);
-            return weather_city_date;
+            try {
+                System.out.println("Cache hit for key: " + cacheKey);
+                WeatherDTO weather_city_date = objectMapper.readValue(cachedData, WeatherDTO.class);
+                return weather_city_date;
+            } catch (JsonProcessingException e){
+                throw new RuntimeException("Failed to parse cached data", e);
+            }
 
         }
+        System.out.println("Cache miss for key: " + cacheKey);
 
 
         String url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/"
@@ -37,6 +45,10 @@ public class WeatherService {
                 + "&contentType=json";
         RestTemplate restTemplate = new RestTemplate();
         WeatherDTO response = restTemplate.getForObject(url, WeatherDTO.class);
+        try{redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(response), Duration.ofHours(12));}
+        catch (JsonProcessingException e){
+            throw new RuntimeException("Failed to cache data", e);
+        }
         return response;
 
     }
